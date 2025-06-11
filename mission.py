@@ -1,6 +1,7 @@
 import asyncio
 from mavsdk import System
 from mavsdk import mission
+from mavsdk.mission import MissionPlan
  
 async def run():
     drone = System()
@@ -60,7 +61,7 @@ async def upload_mission(drone):
     ]
  
     await drone.mission.set_return_to_launch_after_mission(True)
-    await drone.mission.upload_mission(mission_items)
+    await drone.mission.upload_mission(MissionPlan(mission_items))
     await drone.mission.start_mission()
  
 async def monitor_battery(drone):
