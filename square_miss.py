@@ -28,7 +28,7 @@ async def run():
         launch_lon = pos.longitude_deg
         break
  
-    square_size_m = 10
+    square_size_m = 1
     offset_deg = square_size_m * METER_TO_DEG
  
     # Define square corners clockwise
