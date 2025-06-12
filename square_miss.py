@@ -50,6 +50,11 @@ async def run():
  
     await drone.mission.set_return_to_launch_after_mission(False)
     await drone.mission.upload_mission(MissionPlan(mission_items))
+    
+    print("🛫 Arming the drone...")
+    await drone.action.arm()
+     
+    print("🚀 Starting mission...")
     await drone.mission.start_mission()
  
     # Wait until final waypoint is reached
