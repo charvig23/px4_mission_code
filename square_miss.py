@@ -56,6 +56,11 @@ async def run():
             gimbal_pitch_deg=0.0,
             gimbal_yaw_deg=0.0,
             camera_action=MissionItem.CameraAction.NONE,
+            loiter_time_s=0.0,
+            camera_photo_interval_s=0.0,
+            acceptance_radius_m=2.0,
+            yaw_deg=float('nan'),
+            camera_photo_distance_m=0.0
         ))
  
     # Upload and start mission
