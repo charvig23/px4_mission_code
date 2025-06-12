@@ -12,22 +12,22 @@ async def run():
             print("✅ Drone connected")
             break
  
-    # Define square coordinates
+    # Define square corners (~10m side)
     origin_lat = 47.397751
     origin_lon = 8.545607
-    side_offset = 0.00009  # ~10 meters
+    offset = 0.00009  # ~10 meters in degrees
  
     corners = [
         (origin_lat, origin_lon),
-        (origin_lat, origin_lon + side_offset),
-        (origin_lat + side_offset, origin_lon + side_offset),
-        (origin_lat + side_offset, origin_lon),
-        (origin_lat, origin_lon),  # back to start
+        (origin_lat, origin_lon + offset),
+        (origin_lat + offset, origin_lon + offset),
+        (origin_lat + offset, origin_lon),
+        (origin_lat, origin_lon),  # return to start
     ]
  
-    print("📍 Waypoints:")
+    print("📍 Square corners:")
     for i, (lat, lon) in enumerate(corners):
-        print(f"  ▪️ Corner {i+1}: lat={lat:.6f}, lon={lon:.6f}")
+        print(f"   ▪️ Corner {i+1}: lat={lat:.6f}, lon={lon:.6f}")
  
     # Create mission items
     mission_items = []
@@ -43,21 +43,20 @@ async def run():
             camera_action=MissionItem.CameraAction.NONE,
             loiter_time_s=0.0,
             camera_photo_interval_s=0.0,
-            acceptance_radius_m=1.0,
+            acceptance_radius_m=2.0,
             yaw_deg=float('nan'),
             camera_photo_distance_m=0.0,
         ))
  
     await drone.mission.set_return_to_launch_after_mission(False)
     await drone.mission.upload_mission(MissionPlan(mission_items))
- 
-    print("🚀 Starting mission...")
     await drone.mission.start_mission()
  
-    # Wait for mission to finish
-    async for is_finished in drone.mission.mission_finished():
-        if is_finished:
-            print("✅ Mission done. Landing...")
+    # Wait until final waypoint is reached
+    total_waypoints = len(mission_items)
+    async for progress in drone.mission.mission_progress():
+        if progress.current == total_waypoints - 1:
+            print("✅ Mission complete. Landing now...")
             await drone.action.land()
             break
  
