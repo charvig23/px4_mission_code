@@ -2,6 +2,7 @@ import asyncio
 from mavsdk import System
  
 TEMPERATURE_THRESHOLD = 60.0  # Celsius
+HOVER_DURATION = 30  # seconds
  
 async def run():
     drone = System()
@@ -23,12 +24,15 @@ async def run():
     await drone.action.takeoff()
     await asyncio.sleep(5)
  
-    # Start temperature monitor and hover in place
     print("🌡️ Monitoring temperature during hover...")
-    await monitor_temperature_and_land(drone)
+    try:
+        await asyncio.wait_for(monitor_temperature_and_land(drone), timeout=HOVER_DURATION)
+    except asyncio.TimeoutError:
+        print("⏱️ Hover duration over. Landing...")
+        await drone.action.land()
  
 async def monitor_temperature_and_land(drone):
-    async for imu in drone.telemetry.imu_reading_ned():
+    async for imu in drone.telemetry.imu():
         temp = imu.temperature_degc
         print(f"🌡️ Temperature: {temp:.2f} °C")
         if temp > TEMPERATURE_THRESHOLD:
