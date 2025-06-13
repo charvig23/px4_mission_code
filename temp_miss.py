@@ -1,8 +1,8 @@
 import asyncio
 from mavsdk import System
  
-TEMPERATURE_THRESHOLD = 60.0  # Celsius
-HOVER_DURATION = 30  # seconds
+TEMPERATURE_THRESHOLD = 16.0  # Celsius
+HOVER_DURATION = 15  # seconds
  
 async def run():
     drone = System()
