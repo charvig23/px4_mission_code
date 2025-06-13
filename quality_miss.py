@@ -37,7 +37,7 @@ async def monitor_gps_quality_and_act(drone):
     async for gps in drone.telemetry.gps_info():
         print(f"📡 Satellites: {gps.num_satellites}, Fix type: {gps.fix_type}")
  
-        if gps.num_satellites < MIN_SATELLITES or gps.fix_type < MIN_FIX_TYPE:
+        if gps.num_satellites < MIN_SATELLITES or gps.fix_type.value < MIN_FIX_TYPE:
             print("⚠️ Poor GPS quality detected! Landing immediately.")
             await drone.action.land()
             break
