@@ -3,9 +3,11 @@ import requests
 import json
 from mavsdk import System
 
-# Function to query the LLM for reasoning using streaming response
+LOW_TEMP_THRESHOLD = 15.0
+CONSECUTIVE_LOW_LIMIT = 5
+
 def query_llm_for_action(temp):
-    prompt = f"The drone's temperature is {temp:.2f}°C. Should it land or continue hovering? Reply with only 'land' or 'hover'."
+    prompt = f"The drone's temperature is {temp:.2f}°C. Should it land or continue hovering? Reply only with 'land' or 'hover'."
 
     try:
         response = requests.post(
@@ -27,25 +29,35 @@ def query_llm_for_action(temp):
         return action
     except Exception as e:
         print(f"❌ Error contacting LLM: {e}")
-        return "hover"  # safe fallback
+        return "hover"  # Safe fallback
 
-# Monitor temperature and take action based on LLM reasoning
 async def monitor_temperature_and_respond(drone):
+    consecutive_low = 0
+
     async for imu in drone.telemetry.imu():
         temp = imu.temperature_degc
         print(f"🌡️ Temperature: {temp:.2f} °C")
 
-        action = query_llm_for_action(temp)
-        print(f"🤖 LLM Decision: {action}")
+        if temp <= LOW_TEMP_THRESHOLD:
+            consecutive_low += 1
+            print(f"ℹ️ Low temperature detected ({consecutive_low} in a row)")
 
-        if "land" in action:
-            print("🚨 LLM advised landing. Executing...")
-            await drone.action.land()
-            break
+            if consecutive_low >= CONSECUTIVE_LOW_LIMIT:
+                print("🚨 Temperature low for too long. Landing...")
+                await drone.action.land()
+                break
+        else:
+            consecutive_low = 0
+            action = query_llm_for_action(temp)
+            print(f"🤖 LLM Decision: {action}")
+
+            if "land" in action:
+                print("🚨 LLM advised landing. Executing...")
+                await drone.action.land()
+                break
 
         await asyncio.sleep(1)
 
-# Main drone logic
 async def run():
     drone = System()
     await drone.connect(system_address="udp://:14540")
@@ -72,3 +84,4 @@ async def run():
 
 if __name__ == "__main__":
     asyncio.run(run())
+
