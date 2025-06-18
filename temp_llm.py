@@ -1,13 +1,23 @@
 import asyncio
 import requests
 import json
+import os
 from mavsdk import System
+from datetime import datetime
 
-LOW_TEMP_THRESHOLD = 15.0
-CONSECUTIVE_LOW_LIMIT = 5
+# Setup log file in current folder
+LOG_FILE = os.path.join(os.path.dirname(__file__), "llm_drone_log.txt")
 
+def log(message):
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    with open(LOG_FILE, "a") as f:
+        f.write(f"{timestamp} {message}\n")
+    print(message)
+
+# Query LLM with temperature
 def query_llm_for_action(temp):
     prompt = f"The drone's temperature is {temp:.2f}°C. Should it land or continue hovering? Reply only with 'land' or 'hover'."
+    log(f"🔍 Sending to LLM: {prompt}")
 
     try:
         response = requests.post(
@@ -23,65 +33,68 @@ def query_llm_for_action(temp):
                     data = json.loads(line.decode('utf-8'))
                     full_output += data.get("response", "")
                 except Exception as e:
-                    print(f"⚠️ Decode error: {e}")
+                    log(f"⚠️ Decode error: {e}")
         
         action = full_output.strip().lower()
+        log(f"🧠 LLM Response: {action}")
         return action
     except Exception as e:
-        print(f"❌ Error contacting LLM: {e}")
-        return "hover"  # Safe fallback
+        log(f"❌ Error contacting LLM: {e}")
+        return "hover"
 
-async def monitor_temperature_and_respond(drone):
-    consecutive_low = 0
-
+# Temperature monitoring logic
+async def monitor_temperature(drone):
+    iteration = 0
     async for imu in drone.telemetry.imu():
         temp = imu.temperature_degc
-        print(f"🌡️ Temperature: {temp:.2f} °C")
+        log(f"\n🔁 Iteration {iteration + 1} | 🌡️ Temperature: {temp:.2f} °C")
 
-        if temp <= LOW_TEMP_THRESHOLD:
-            consecutive_low += 1
-            print(f"ℹ️ Low temperature detected ({consecutive_low} in a row)")
-
-            if consecutive_low >= CONSECUTIVE_LOW_LIMIT:
-                print("🚨 Temperature low for too long. Landing...")
-                await drone.action.land()
-                break
+        if temp > 15.0:
+            log("🚨 Temperature > 15°C → Landing immediately.")
+            await drone.action.land()
+            break
         else:
-            consecutive_low = 0
+            log("✅ Temperature <= 15°C → Asking LLM...")
             action = query_llm_for_action(temp)
-            print(f"🤖 LLM Decision: {action}")
 
             if "land" in action:
-                print("🚨 LLM advised landing. Executing...")
+                log("🚨 LLM advised landing → Executing.")
                 await drone.action.land()
                 break
+            else:
+                log("🛑 LLM advised to hover.")
+
+        iteration += 1
+        if iteration >= 3:
+            log("📴 Completed 3 checks. Exiting.")
+            break
 
         await asyncio.sleep(1)
 
+# Main control
 async def run():
     drone = System()
     await drone.connect(system_address="udp://:14540")
-    print("📡 Connecting to drone...")
+    log("📡 Connecting to drone...")
 
     async for state in drone.core.connection_state():
         if state.is_connected:
-            print("✅ Drone connected!")
+            log("✅ Drone connected!")
             break
 
-    print("⏳ Waiting for drone to be ready...")
+    log("⏳ Waiting for drone readiness...")
     async for health in drone.telemetry.health():
         if health.is_global_position_ok and health.is_gyrometer_calibration_ok:
-            print("✅ Drone ready for flight")
+            log("✅ Drone ready for flight.")
             break
 
-    print("🚁 Arming and taking off...")
+    log("🚁 Arming and taking off...")
     await drone.action.arm()
     await drone.action.takeoff()
     await asyncio.sleep(5)
 
-    print("🌡️ Monitoring temperature with reasoning...")
-    await monitor_temperature_and_respond(drone)
+    log("📈 Starting temperature monitoring with LLM reasoning...")
+    await monitor_temperature(drone)
 
 if __name__ == "__main__":
     asyncio.run(run())
-
