@@ -19,14 +19,14 @@ def query_llm(prompt):
 
         response = requests.post("http://localhost:11434/api/generate", json=payload, stream=True)
 
-        print("🧠 LLM Summary:")
+        print(" LLM Summary:")
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode('utf-8'))
                 print(data.get("response", ""), end='', flush=True)
         print("\n---")
     except Exception as e:
-        print(f"❌ Error contacting LLM: {e}")
+        print(f" Error contacting LLM: {e}")
 
 def image_callback(msg):
     try:
@@ -42,16 +42,16 @@ def image_callback(msg):
         object_list = ", ".join(sorted(detected)) or "nothing"
         prompt = f"The drone camera sees the following objects: {object_list}. Describe the surroundings based on this."
 
-        print(f"📦 Detected objects: {object_list}")
+        print(f" Detected objects: {object_list}")
         query_llm(prompt)
 
     except Exception as e:
-        print(f"❌ Error in image processing: {e}")
+        print(f" Error in image processing: {e}")
 
 def main():
     rospy.init_node('aruco_llm_object_summary_node')
     rospy.Subscriber('/aruco_cam/camera/link/camera/image_raw', Image, image_callback)
-    print("🚁 Listening for camera input and sending summary to LLM...")
+    print(" Listening for camera input and sending summary to LLM...")
     rospy.spin()
 
 if __name__ == '__main__':
