@@ -12,7 +12,7 @@ model = YOLO("yolov8n.pt")  # or yolov8s.pt based on what's available
 def query_llm(prompt):
     try:
         payload = {
-            "model": "llama3.2",
+            "model": "llama3.2:1b",
             "prompt": prompt,
             "stream": True
         }
