@@ -8,7 +8,6 @@ from mavsdk import System
 def log(message):
     print(message)
 
-# Query LLM with temperature
 def query_llm_for_action(temp):
     prompt = f"The drone's temperature is {temp:.2f}°C. Should it land or continue hovering? Reply only with 'land' or 'hover'."
     log(f"Sending to LLM: {prompt}")
@@ -36,7 +35,6 @@ def query_llm_for_action(temp):
         log(f" Error contacting LLM: {e}")
         return "hover"
 
-# Temperature monitoring logic
 async def monitor_temperature(drone):
     iteration = 0
     async for imu in drone.telemetry.imu():
@@ -44,7 +42,7 @@ async def monitor_temperature(drone):
         log(f"\n Iteration {iteration + 1} |  Temperature: {temp:.2f} °C")
 
         if temp > 15.0:
-            log("🚨 Temperature > 15°C → Landing immediately.")
+            log(" Temperature > 15°C → Landing immediately.")
             await drone.action.land()
             break
         else:
@@ -65,7 +63,6 @@ async def monitor_temperature(drone):
 
         await asyncio.sleep(1)
 
-# Main control
 async def run():
     drone = System()
     await drone.connect(system_address="udp://:14540")
