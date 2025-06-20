@@ -58,7 +58,8 @@ async def monitor_temperature(drone):
 
         iteration += 1
         if iteration >= 3:
-            log(" Completed 3 checks. Exiting.")
+            log(" Completed 3 checks. Landing & Exiting.")
+            await drone.action.land()
             break
 
         await asyncio.sleep(1)
