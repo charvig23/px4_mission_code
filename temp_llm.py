@@ -9,7 +9,7 @@ def log(message):
     print(message)
 
 def query_llm_for_action(temp):
-    prompt = f"The drone's temperature is {temp:.2f}°C. Should it land or continue hovering? Reply only with 'land' or 'hover'."
+    prompt = f"The drone's temperature is {temp:.2f}°C. Should it land or continue hovering?"
     log(f"Sending to LLM: {prompt}")
 
     try:
