@@ -65,6 +65,7 @@ async def run():
             yaw_deg=float('nan'),
             camera_photo_interval_s=0.0,
             camera_photo_distance_m=0.0,
+            vehicle_action=MissionItem.VehicleAction.NONE
         ))
 
     await drone.mission.set_return_to_launch_after_mission(False)
