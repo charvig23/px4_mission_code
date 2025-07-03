@@ -74,7 +74,7 @@ async def run():
 
     print("🛫 Arming the drone...")
     await drone.action.arm()
-    await asyncio.sleep(1)
+    await asyncio.sleep(3)
 
     print("🚀 Starting mission...")
     await drone.mission.start_mission()
