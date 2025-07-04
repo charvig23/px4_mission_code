@@ -68,7 +68,7 @@ async def run():
             vehicle_action=MissionItem.VehicleAction.NONE
         ))
 
-    await drone.mission.set_return_to_launch_after_mission(True)
+    await drone.mission.set_return_to_launch_after_mission(False)
     await drone.mission.upload_mission(MissionPlan(mission_items))
     await asyncio.sleep(1)
 
